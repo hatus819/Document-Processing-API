@@ -3,7 +3,10 @@
   "builds": [
     {
       "src": "src/main.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "buildCommand": "prisma generate"
+      }
     }
   ],
   "routes": [
