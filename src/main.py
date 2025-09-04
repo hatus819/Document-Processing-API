@@ -4,14 +4,6 @@ from src.processing.document_handler import process_document
 
 app = FastAPI(title="Document Processing API")
 
-@app.on_event("startup")
-async def startup():
-    await prisma.connect()
-
-@app.on_event("shutdown")
-async def shutdown():
-    await prisma.disconnect()
-
 @app.post("/process-document/")
 async def process_document_endpoint(file: UploadFile = File(...)):
     """
@@ -24,6 +16,9 @@ async def process_document_endpoint(file: UploadFile = File(...)):
         dict: A JSON response with the ID of the created database record.
     """
     try:
+        # Connect to database (serverless-friendly)
+        await prisma.connect()
+
         # Read file content
         file_bytes = await file.read()
 
@@ -38,9 +33,14 @@ async def process_document_endpoint(file: UploadFile = File(...)):
             }
         )
 
+        # Disconnect from database
+        await prisma.disconnect()
+
         return {"id": processed_doc.id}
 
     except ValueError as e:
+        await prisma.disconnect()
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        await prisma.disconnect()
         raise HTTPException(status_code=500, detail="Internal server error")
